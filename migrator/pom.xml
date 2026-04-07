@@ -5,7 +5,7 @@
         <groupId>org.finos.fluxnova.bpm</groupId>
         <artifactId>fluxnova-parent</artifactId>
         <relativePath>../parent</relativePath>
-        <version>2.0.0-SNAPSHOT</version>
+        <version>2.0.0</version>
     </parent>
 
     <groupId>org.finos.fluxnova</groupId>
@@ -14,7 +14,7 @@
 
     <properties>
         <!-- Maven Dependencies -->
-        <maven-model.version>3.9.9</maven-model.version>
+        <maven-model.version>3.9.14</maven-model.version>
         <maven-invoker.version>3.3.0</maven-invoker.version>
         <plexus-utils.version>3.5.1</plexus-utils.version>
 
