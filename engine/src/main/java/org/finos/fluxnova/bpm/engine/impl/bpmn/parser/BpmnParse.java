@@ -56,6 +56,7 @@ import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.DmnBusinessRuleTaskActiv
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.ErrorEndEventActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.EventBasedGatewayActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior;
+import org.finos.fluxnova.bpm.model.bpmn.AdHocOrdering;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.EventSubProcessActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.EventSubProcessStartConditionalEventActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.EventSubProcessStartEventActivityBehavior;
@@ -3912,31 +3913,29 @@ public class BpmnParse extends Parse {
    *          The current scope on which the ad-hoc subprocess is defined.
    */
   public ActivityImpl parseAdHocSubProcess(Element adHocElement, ScopeImpl scope) {
-    ActivityImpl activity = createActivityOnScope(adHocElement, scope);
-    activity.setSubProcessScope(true);
-    activity.setScope(true);
+    ActivityImpl adHocSubprocessActivity = createActivityOnScope(adHocElement, scope);
+    adHocSubprocessActivity.setSubProcessScope(true);
+    adHocSubprocessActivity.setScope(true);
 
-    parseAsynchronousContinuationForActivity(adHocElement, activity);
+    parseAsynchronousContinuationForActivity(adHocElement, adHocSubprocessActivity);
 
-    activity.setProperty(PROPERTYNAME_CONSUMES_COMPENSATION, true);
-    activity.setActivityBehavior(new AdHocSubProcessActivityBehavior());
+    adHocSubprocessActivity.setProperty(PROPERTYNAME_CONSUMES_COMPENSATION, true);
+    adHocSubprocessActivity.setActivityBehavior(new AdHocSubProcessActivityBehavior());
 
     // ordering attribute — default Parallel per BPMN 2.0 spec
-    String ordering = adHocElement.attribute("ordering");
-    if (ordering == null) {
-      ordering = "Parallel";
-    }
-    activity.getProperties().set(BpmnProperties.AD_HOC_ORDERING, ordering);
+    String orderingAttr = adHocElement.attribute("ordering");
+    AdHocOrdering ordering = (orderingAttr != null) ? AdHocOrdering.valueOf(orderingAttr) : AdHocOrdering.Parallel;
+    adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_ORDERING, ordering);
 
     // cancelRemainingInstances attribute — default true per BPMN 2.0 spec
     Boolean cancelRemainingInstances = parseBooleanAttribute(adHocElement.attribute("cancelRemainingInstances"), true);
-    activity.getProperties().set(BpmnProperties.AD_HOC_CANCEL_REMAINING_INSTANCES, cancelRemainingInstances);
+    adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_CANCEL_REMAINING_INSTANCES, cancelRemainingInstances);
 
-    // completionCondition child element
+    // completionCondition child element — may be absent, subprocess then requires force-complete
     Element completionCondition = adHocElement.element("completionCondition");
     if (completionCondition != null) {
       String completionConditionText = completionCondition.getText();
-      activity.getProperties().set(BpmnProperties.AD_HOC_COMPLETION_CONDITION, completionConditionText);
+      adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_COMPLETION_CONDITION, completionConditionText);
     }
 
     // Reject startEvent and endEvent as direct children
@@ -3947,23 +3946,16 @@ public class BpmnParse extends Parse {
       addError("An ad-hoc subprocess must not contain an endEvent", adHocElement);
     }
 
-    parseScope(adHocElement, activity);
+    parseScope(adHocElement, adHocSubprocessActivity);
 
-    // Warn if no child activities are defined
-    List<Element> childActivities = adHocElement.elements();
-    long triggerable = childActivities.stream()
-        .filter(e -> !e.getTagName().equals("sequenceFlow")
-            && !e.getTagName().equals("completionCondition")
-            && !e.getTagName().equals("documentation"))
-        .filter(e -> adHocElement.elements("sequenceFlow").stream()
-            .noneMatch(sf -> e.attribute("id") != null && e.attribute("id").equals(sf.attribute("targetRef"))))
-        .count();
-
-    if (triggerable == 0) {
+    // Warn if no directly-triggerable activities exist (i.e. all have incoming sequence flows)
+    boolean hasTriggerable = adHocSubprocessActivity.getActivities().stream()
+        .anyMatch(a -> a.getIncomingTransitions().isEmpty());
+    if (!hasTriggerable) {
       addWarning("Ad-hoc subprocess contains no directly-triggerable activities (all have incoming sequence flows or none exist)", adHocElement);
     }
 
-    return activity;
+    return adHocSubprocessActivity;
   }
 
   protected ActivityImpl parseTransaction(Element transactionElement, ScopeImpl scope) {
