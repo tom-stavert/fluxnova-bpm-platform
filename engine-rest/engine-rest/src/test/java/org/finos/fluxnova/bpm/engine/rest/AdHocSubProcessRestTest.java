@@ -42,7 +42,7 @@ import org.junit.Test;
 import io.restassured.http.ContentType;
 
 /**
- * REST-layer integration tests for the ad-hoc subprocess endpoints (Step 7.4):
+ * Integration tests for the ad-hoc subprocess REST endpoints:
  * <ul>
  *   <li>{@code POST /execution/{id}/trigger-ad-hoc-activity}</li>
  *   <li>{@code POST /execution/{id}/complete-ad-hoc}</li>

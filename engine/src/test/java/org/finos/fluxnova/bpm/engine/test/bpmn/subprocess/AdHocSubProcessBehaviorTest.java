@@ -32,8 +32,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Integration tests for {@link org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior}
- * (Step 7.3). Covers all core runtime scenarios.
+ * Integration tests for {@link org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior}.
+ * Covers all core runtime scenarios.
  *
  * <p>BPMN processes are deployed inline via {@code repositoryService.addString()} so no
  * external resource files are required.

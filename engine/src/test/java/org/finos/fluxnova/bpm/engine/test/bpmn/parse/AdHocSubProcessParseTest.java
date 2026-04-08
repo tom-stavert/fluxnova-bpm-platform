@@ -43,7 +43,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 /**
- * Parser-level tests for BPMN ad-hoc subprocess (Step 7.2).
+ * Parser-level tests for BPMN ad-hoc subprocess.
  *
  * Verifies that {@code parseAdHocSubProcess} in {@link org.finos.fluxnova.bpm.engine.impl.bpmn.parser.BpmnParse}:
  * <ul>
