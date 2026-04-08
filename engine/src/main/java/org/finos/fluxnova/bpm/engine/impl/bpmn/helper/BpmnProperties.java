@@ -79,4 +79,10 @@ public class BpmnProperties {
   public static final PropertyKey<Map<String, String>> EXTENSION_PROPERTIES = new PropertyKey<>("extensionProperties");
 
   public static final PropertyListKey<FluxnovaErrorEventDefinition> CAMUNDA_ERROR_EVENT_DEFINITION = new PropertyListKey<>("camundaErrorEventDefinition");
+
+  public static final PropertyKey<String> AD_HOC_ORDERING = new PropertyKey<>("adHocOrdering");
+
+  public static final PropertyKey<Boolean> AD_HOC_CANCEL_REMAINING_INSTANCES = new PropertyKey<>("adHocCancelRemainingInstances");
+
+  public static final PropertyKey<String> AD_HOC_COMPLETION_CONDITION = new PropertyKey<>("adHocCompletionCondition");
 }
