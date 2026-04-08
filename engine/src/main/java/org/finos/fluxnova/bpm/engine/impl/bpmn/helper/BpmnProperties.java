@@ -84,6 +84,4 @@ public class BpmnProperties {
   public static final PropertyKey<AdHocOrdering> AD_HOC_ORDERING = new PropertyKey<>("adHocOrdering");
 
   public static final PropertyKey<Boolean> AD_HOC_CANCEL_REMAINING_INSTANCES = new PropertyKey<>("adHocCancelRemainingInstances");
-
-  public static final PropertyKey<String> AD_HOC_COMPLETION_CONDITION = new PropertyKey<>("adHocCompletionCondition");
 }

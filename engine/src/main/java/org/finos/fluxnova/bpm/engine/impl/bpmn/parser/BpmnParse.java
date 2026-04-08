@@ -3931,11 +3931,13 @@ public class BpmnParse extends Parse {
     Boolean cancelRemainingInstances = parseBooleanAttribute(adHocElement.attribute("cancelRemainingInstances"), true);
     adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_CANCEL_REMAINING_INSTANCES, cancelRemainingInstances);
 
-    // completionCondition child element — may be absent, subprocess then requires force-complete
+    // completionCondition child element — wire expression directly into behavior
+    // (absent completionCondition is valid; subprocess then requires force-complete via API)
     Element completionCondition = adHocElement.element("completionCondition");
     if (completionCondition != null) {
       String completionConditionText = completionCondition.getText();
-      adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_COMPLETION_CONDITION, completionConditionText);
+      ((AdHocSubProcessActivityBehavior) adHocSubprocessActivity.getActivityBehavior())
+          .setCompletionConditionExpression(expressionManager.createExpression(completionConditionText));
     }
 
     // Reject startEvent and endEvent as direct children
