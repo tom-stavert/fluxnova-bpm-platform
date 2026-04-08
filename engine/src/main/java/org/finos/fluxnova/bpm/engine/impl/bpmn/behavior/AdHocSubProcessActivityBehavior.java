@@ -52,6 +52,10 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
     this.completionConditionExpression = expression;
   }
 
+  public Expression getCompletionConditionExpression() {
+    return completionConditionExpression;
+  }
+
   // -------------------------------------------------------------------------
   // execute — park the scope, initialise counters
   // -------------------------------------------------------------------------
