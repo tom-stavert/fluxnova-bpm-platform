@@ -1053,6 +1053,39 @@ public interface RuntimeService {
   void signal(String executionId);
 
   /**
+   * Triggers a named direct-child activity inside an ad-hoc subprocess that is currently
+   * waiting at the given execution.
+   *
+   * @param executionId the id of the ad-hoc subprocess scope execution, cannot be null.
+   * @param activityId  the id of the direct child activity to start, cannot be null.
+   *
+   * @throws BadUserRequestException
+   *          when no execution is found for the given id, the execution is not waiting
+   *          in an ad-hoc subprocess scope, the activityId is not a direct child, sequential
+   *          ordering is violated, or the subprocess is already draining to completion.
+   * @throws AuthorizationException
+   *          if the user has no {@link Permissions#UPDATE} permission on
+   *          {@link Resources#PROCESS_INSTANCE} or no {@link Permissions#UPDATE_INSTANCE}
+   *          permission on {@link Resources#PROCESS_DEFINITION}.
+   */
+  void triggerAdHocActivity(String executionId, String activityId);
+
+  /**
+   * Force-completes an ad-hoc subprocess regardless of its completion condition.
+   *
+   * @param executionId the id of the ad-hoc subprocess scope execution, cannot be null.
+   *
+   * @throws BadUserRequestException
+   *          when no execution is found for the given id or the execution is not waiting
+   *          in an ad-hoc subprocess scope.
+   * @throws AuthorizationException
+   *          if the user has no {@link Permissions#UPDATE} permission on
+   *          {@link Resources#PROCESS_INSTANCE} or no {@link Permissions#UPDATE_INSTANCE}
+   *          permission on {@link Resources#PROCESS_DEFINITION}.
+   */
+  void completeAdHocSubprocess(String executionId);
+
+  /**
    * Sends an external trigger to an activity instance that is waiting inside the given execution.
    *
    * Note that you need to provide the exact execution that is waiting for the signal
