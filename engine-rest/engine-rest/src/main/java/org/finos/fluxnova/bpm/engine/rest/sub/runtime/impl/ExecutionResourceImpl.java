@@ -28,6 +28,7 @@ import org.finos.fluxnova.bpm.engine.rest.dto.VariableValueDto;
 import org.finos.fluxnova.bpm.engine.rest.dto.runtime.ExecutionDto;
 import org.finos.fluxnova.bpm.engine.rest.dto.runtime.ExecutionTriggerDto;
 import org.finos.fluxnova.bpm.engine.rest.dto.runtime.IncidentDto;
+import org.finos.fluxnova.bpm.engine.rest.dto.runtime.TriggerAdHocActivityDto;
 import org.finos.fluxnova.bpm.engine.rest.exception.InvalidRequestException;
 import org.finos.fluxnova.bpm.engine.rest.exception.RestException;
 import org.finos.fluxnova.bpm.engine.rest.sub.VariableResource;
@@ -91,6 +92,32 @@ public class ExecutionResourceImpl implements ExecutionResource {
   @Override
   public EventSubscriptionResource getMessageEventSubscription(String messageName) {
     return new MessageEventSubscriptionResource(engine, executionId, messageName, objectMapper);
+  }
+
+  @Override
+  public void triggerAdHocActivity(TriggerAdHocActivityDto dto) {
+    try {
+      engine.getRuntimeService().triggerAdHocActivity(executionId, dto.getActivityId());
+    } catch (AuthorizationException e) {
+      throw e;
+    } catch (BadUserRequestException e) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, e, e.getMessage());
+    } catch (ProcessEngineException e) {
+      throw new RestException(Status.INTERNAL_SERVER_ERROR, e, e.getMessage());
+    }
+  }
+
+  @Override
+  public void completeAdHoc() {
+    try {
+      engine.getRuntimeService().completeAdHocSubprocess(executionId);
+    } catch (AuthorizationException e) {
+      throw e;
+    } catch (BadUserRequestException e) {
+      throw new InvalidRequestException(Status.BAD_REQUEST, e, e.getMessage());
+    } catch (ProcessEngineException e) {
+      throw new RestException(Status.INTERNAL_SERVER_ERROR, e, e.getMessage());
+    }
   }
 
   @Override
