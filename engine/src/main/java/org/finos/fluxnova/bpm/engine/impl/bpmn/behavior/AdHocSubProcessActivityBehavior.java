@@ -116,7 +116,7 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
     // Counters increment only on terminal completions (Decision 5)
     endedExecution.remove();
 
-    int active    = Math.max(0, intVar(scopeExecution, NR_OF_ACTIVE_INSTANCES)    - 1);
+    int active    = intVar(scopeExecution, NR_OF_ACTIVE_INSTANCES) - 1;
     int completed =            intVar(scopeExecution, NR_OF_COMPLETED_INSTANCES) + 1;
     scopeExecution.setVariableLocal(NR_OF_ACTIVE_INSTANCES,    active);
     scopeExecution.setVariableLocal(NR_OF_COMPLETED_INSTANCES, completed);
