@@ -284,7 +284,7 @@ public class AdHocSubProcessParseTest {
 
   private ActivityImpl getActivityImpl(ProcessDefinition pd, String activityId) {
     ProcessDefinitionEntity entity = processEngineConfiguration.getDeploymentCache()
-        .getProcessDefinitionEntityById(pd.getId());
+        .getProcessDefinitionCache().get(pd.getId());
     return entity.findActivity(activityId);
   }
 
