@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 import org.finos.fluxnova.bpm.engine.BadUserRequestException;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior;
+import org.finos.fluxnova.bpm.engine.impl.cfg.CommandChecker;
 import org.finos.fluxnova.bpm.engine.impl.interceptor.Command;
 import org.finos.fluxnova.bpm.engine.impl.interceptor.CommandContext;
 import org.finos.fluxnova.bpm.engine.impl.persistence.entity.ExecutionEntity;
@@ -53,7 +54,7 @@ public class CompleteAdHocSubprocessCmd implements Command<Void>, Serializable {
     ensureNotNull(BadUserRequestException.class,
         "Execution '" + executionId + "' does not exist", "execution", execution);
 
-    for (org.finos.fluxnova.bpm.engine.impl.cfg.CommandChecker checker :
+    for (CommandChecker checker :
         commandContext.getProcessEngineConfiguration().getCommandCheckers()) {
       checker.checkUpdateProcessInstance(execution);
     }
