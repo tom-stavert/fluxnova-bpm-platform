@@ -104,8 +104,13 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
       }
     }
 
-    // Start the child — Decision 2: use executeActivity, not raw createExecution
-    scopeExecution.executeActivity(childActivity);
+    // Create a new concurrent child execution so the scope execution stays
+    // parked on the ad-hoc subprocess, allowing further triggers and correct
+    // lifecycle tracking.
+    ActivityExecution childExecution = scopeExecution.createExecution();
+    ((ExecutionEntity) childExecution).setConcurrent(true);
+    ((ExecutionEntity) childExecution).setScope(false);
+    childExecution.executeActivity(childActivity);
 
     int active = intVar(scopeExecution, NR_OF_ACTIVE_INSTANCES);
     scopeExecution.setVariableLocal(NR_OF_ACTIVE_INSTANCES, active + 1);
