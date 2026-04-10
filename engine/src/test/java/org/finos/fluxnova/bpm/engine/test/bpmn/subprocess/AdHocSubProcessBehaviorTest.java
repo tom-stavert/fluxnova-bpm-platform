@@ -274,16 +274,19 @@ public class AdHocSubProcessBehaviorTest extends PluggableProcessEngineTest {
     ProcessInstance pi = runtimeService.startProcessInstanceByKey(PROCESS_KEY);
     Execution adHocExec = adHocExecution(pi);
 
+    // Trigger both tasks so there is still an active child when taskA completes;
+    // otherwise the drain finishes immediately (active=0) and the scope execution is gone.
     runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskA");
+    runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskB");
 
-    // Complete taskA — condition satisfied, enters drain mode
+    // Complete taskA — condition satisfied; taskB still active so drain mode is entered
     Task taskA = taskService.createTaskQuery().taskDefinitionKey("taskA")
         .processInstanceId(pi.getId()).singleResult();
     taskService.complete(taskA.getId());
 
-    // Trying to trigger again must be rejected
+    // Trying to trigger a new activity while draining must be rejected
     assertThatThrownBy(() ->
-        runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskB")
+        runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskA")
     ).isInstanceOf(BadUserRequestException.class)
      .hasMessageContaining("ad-hoc subprocess is waiting to complete");
   }
@@ -566,11 +569,12 @@ public class AdHocSubProcessBehaviorTest extends PluggableProcessEngineTest {
     sb.append("    <adHocSubProcess id=\"adHoc\" ordering=\"").append(ordering)
       .append("\" cancelRemainingInstances=\"").append(cancelRemaining).append("\">");
     sb.append("      <incoming>flow1</incoming><outgoing>flow2</outgoing>");
-    if (completionCondition != null) {
-      sb.append("      <completionCondition>").append(completionCondition).append("</completionCondition>");
-    }
     for (String child : childElements) {
       sb.append("      ").append(child);
+    }
+    // completionCondition is in the XSD extension sequence and must follow all FlowElements
+    if (completionCondition != null) {
+      sb.append("      <completionCondition>").append(completionCondition).append("</completionCondition>");
     }
     sb.append("    </adHocSubProcess>");
     sb.append("    <sequenceFlow id=\"flow2\" sourceRef=\"adHoc\" targetRef=\"end\"/>");

@@ -16,6 +16,9 @@
  */
 package org.finos.fluxnova.bpm.engine.rest.sub.runtime.impl;
 
+import java.util.Collections;
+import java.util.Map;
+
 import javax.ws.rs.core.Response.Status;
 
 import org.finos.fluxnova.bpm.engine.AuthorizationException;
@@ -97,7 +100,10 @@ public class ExecutionResourceImpl implements ExecutionResource {
   @Override
   public void triggerAdHocActivity(TriggerAdHocActivityDto dto) {
     try {
-      VariableMap variables = VariableValueDto.toMap(dto.getVariables(), engine, objectMapper);
+      Map<String, Object> variables = VariableValueDto.toMap(dto.getVariables(), engine, objectMapper);
+      if (variables == null) {
+        variables = Collections.emptyMap();
+      }
       engine.getRuntimeService().triggerAdHocActivity(executionId, dto.getActivityId(), variables);
     } catch (RestException e) {
       String errorMessage = String.format("Cannot trigger ad-hoc activity on execution %s: %s", executionId, e.getMessage());

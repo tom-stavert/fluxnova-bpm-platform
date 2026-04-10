@@ -17,11 +17,15 @@
 package org.finos.fluxnova.bpm.engine.rest;
 
 import static io.restassured.RestAssured.given;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
@@ -77,7 +81,8 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   @Test
   public void testTriggerAdHocActivityReturns204() {
     doNothing().when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID),
+            eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -88,14 +93,15 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
     .when().post(TRIGGER_AD_HOC_URL);
 
     verify(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID),
+            eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
   }
 
   @Test
   public void testTriggerAdHocActivityWithInvalidActivityIdReturns400() {
     doThrow(new BadUserRequestException("Activity 'unknown' is not a direct child"))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, "unknown");
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq("unknown"), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -113,7 +119,7 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   public void testTriggerAdHocActivityOnNonAdHocExecutionReturns400() {
     doThrow(new BadUserRequestException("Execution 'anExecutionId' is not waiting in an ad-hoc subprocess scope"))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -130,7 +136,7 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   public void testTriggerAdHocActivitySequentialConflictReturns400() {
     doThrow(new BadUserRequestException("sequential ad-hoc subprocess already has an active child"))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -146,7 +152,7 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   public void testTriggerAdHocActivityWhileDrainingReturns400() {
     doThrow(new BadUserRequestException("ad-hoc subprocess is waiting to complete"))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -162,7 +168,7 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   public void testTriggerAdHocActivityUnauthorizedReturns403() {
     doThrow(new AuthorizationException("user", "UPDATE", "process-instance", MockProvider.EXAMPLE_EXECUTION_ID))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
@@ -177,7 +183,7 @@ public class AdHocSubProcessRestTest extends AbstractRestServiceTest {
   public void testTriggerAdHocActivityEngineExceptionReturns500() {
     doThrow(new ProcessEngineException("unexpected engine error"))
         .when(runtimeServiceMock)
-        .triggerAdHocActivity(MockProvider.EXAMPLE_EXECUTION_ID, MockProvider.EXAMPLE_ACTIVITY_ID);
+        .triggerAdHocActivity(eq(MockProvider.EXAMPLE_EXECUTION_ID), eq(MockProvider.EXAMPLE_ACTIVITY_ID), any(Map.class));
 
     given()
         .pathParam("id", MockProvider.EXAMPLE_EXECUTION_ID)
