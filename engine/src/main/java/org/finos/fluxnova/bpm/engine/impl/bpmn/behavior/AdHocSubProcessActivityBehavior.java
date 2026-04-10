@@ -104,9 +104,15 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
       }
     }
 
+    if (!childActivity.getIncomingTransitions().isEmpty()) {
+      throw new BadUserRequestException(
+          "Activity '" + activityId + "' has incoming sequence flows and cannot be triggered directly");
+    }
+
     // Create a new concurrent child execution so the scope execution stays
     // parked on the ad-hoc subprocess, allowing further triggers and correct
-    // lifecycle tracking.
+    // lifecycle tracking. (createExecution is used instead of executeActivity so
+    // the scope execution remains parked and parallel triggers work correctly.)
     ActivityExecution childExecution = scopeExecution.createExecution();
     ((ExecutionEntity) childExecution).setConcurrent(true);
     ((ExecutionEntity) childExecution).setScope(false);

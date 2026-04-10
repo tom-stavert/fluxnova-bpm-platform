@@ -46,11 +46,13 @@ public interface ExecutionResource {
 
   @POST
   @Path("/trigger-ad-hoc-activity")
+  @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   void triggerAdHocActivity(TriggerAdHocActivityDto dto);
 
   @POST
   @Path("/complete-ad-hoc")
+  @Produces(MediaType.APPLICATION_JSON)
   void completeAdHoc();
 
   @POST
