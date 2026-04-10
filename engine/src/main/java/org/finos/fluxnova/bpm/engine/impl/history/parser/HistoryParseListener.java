@@ -144,6 +144,10 @@ public class HistoryParseListener implements BpmnParseListener {
     addActivityHandlers(activity);
   }
 
+  public void parseAdHocSubProcess(Element adHocElement, ScopeImpl scope, ActivityImpl activity) {
+    addActivityHandlers(activity);
+  }
+
   public void parseStartEvent(Element startEventElement, ScopeImpl scope, ActivityImpl activity) {
     addActivityHandlers(activity);
   }

@@ -79,6 +79,9 @@ public class AbstractBpmnParseListener implements BpmnParseListener {
   public void parseSubProcess(Element subProcessElement, ScopeImpl scope, ActivityImpl activity) {
   }
 
+  public void parseAdHocSubProcess(Element adHocElement, ScopeImpl scope, ActivityImpl activity) {
+  }
+
   public void parseCallActivity(Element callActivityElement, ScopeImpl scope, ActivityImpl activity) {
   }
 

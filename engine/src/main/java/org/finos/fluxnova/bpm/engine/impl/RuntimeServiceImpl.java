@@ -20,6 +20,7 @@ import static org.finos.fluxnova.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import org.finos.fluxnova.bpm.engine.RuntimeService;
 import org.finos.fluxnova.bpm.engine.batch.Batch;
 import org.finos.fluxnova.bpm.engine.form.FormData;
 import org.finos.fluxnova.bpm.engine.history.HistoricProcessInstanceQuery;
+import org.finos.fluxnova.bpm.engine.impl.cmd.CompleteAdHocSubprocessCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.CreateIncidentCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.DeleteProcessInstanceCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.DeleteProcessInstancesCmd;
@@ -45,6 +47,7 @@ import org.finos.fluxnova.bpm.engine.impl.cmd.ResolveIncidentCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.SetAnnotationForIncidentCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.SetExecutionVariablesCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.SignalCmd;
+import org.finos.fluxnova.bpm.engine.impl.cmd.TriggerAdHocActivityCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.batch.DeleteProcessInstanceBatchCmd;
 import org.finos.fluxnova.bpm.engine.impl.cmd.batch.variables.SetVariablesToProcessInstancesBatchCmd;
 import org.finos.fluxnova.bpm.engine.impl.migration.MigrationPlanBuilderImpl;
@@ -527,6 +530,21 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
   }
 
 
+
+  @Override
+  public void triggerAdHocActivity(String executionId, String activityId) {
+    triggerAdHocActivity(executionId, activityId, Collections.emptyMap());
+  }
+
+  @Override
+  public void triggerAdHocActivity(String executionId, String activityId, Map<String, Object> variables) {
+    commandExecutor.execute(new TriggerAdHocActivityCmd(executionId, activityId, variables));
+  }
+
+  @Override
+  public void completeAdHocSubprocess(String executionId) {
+    commandExecutor.execute(new CompleteAdHocSubprocessCmd(executionId));
+  }
 
   @Override
   public void signal(String executionId) {

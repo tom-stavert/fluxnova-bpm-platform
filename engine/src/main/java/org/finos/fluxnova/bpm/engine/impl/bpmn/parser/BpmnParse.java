@@ -43,6 +43,7 @@ import org.finos.fluxnova.bpm.engine.delegate.VariableListener;
 import org.finos.fluxnova.bpm.engine.impl.Condition;
 import org.finos.fluxnova.bpm.engine.impl.HistoryTimeToLiveParser;
 import org.finos.fluxnova.bpm.engine.impl.ProcessEngineLogger;
+import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.BoundaryConditionalEventActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.BoundaryEventActivityBehavior;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.CallActivityBehavior;
@@ -159,6 +160,7 @@ import org.finos.fluxnova.bpm.engine.impl.util.xml.Namespace;
 import org.finos.fluxnova.bpm.engine.impl.util.xml.Parse;
 import org.finos.fluxnova.bpm.engine.impl.variable.VariableDeclaration;
 import org.finos.fluxnova.bpm.engine.repository.ProcessDefinition;
+import org.finos.fluxnova.bpm.model.bpmn.AdHocOrdering;
 
 /**
  * Specific parsing of one BPMN 2.0 XML file, created by the {@link BpmnParser}.
@@ -1413,7 +1415,9 @@ public class BpmnParse extends Parse {
       activity = parseEventBasedGateway(activityElement, parentElement, scopeElement);
     } else if (activityElement.getTagName().equals(ActivityTypes.TRANSACTION)) {
       activity = parseTransaction(activityElement, scopeElement);
-    } else if (activityElement.getTagName().equals(ActivityTypes.SUB_PROCESS_AD_HOC) || activityElement.getTagName().equals(ActivityTypes.GATEWAY_COMPLEX)) {
+    } else if (activityElement.getTagName().equals(ActivityTypes.SUB_PROCESS_AD_HOC)) {
+      activity = parseAdHocSubProcess(activityElement, scopeElement);
+    } else if (activityElement.getTagName().equals(ActivityTypes.GATEWAY_COMPLEX)) {
       addWarning("Ignoring unsupported activity type", activityElement);
     }
 
@@ -3896,6 +3900,67 @@ public class BpmnParse extends Parse {
       parseListener.parseSubProcess(subProcessElement, scope, subProcessActivity);
     }
     return subProcessActivity;
+  }
+
+  /**
+   * Parses a BPMN 2.0 ad-hoc subprocess. Unlike a regular subprocess, no child
+   * activity is auto-started on entry; activities are triggered explicitly via
+   * the runtime API.
+   *
+   * @param adHocElement
+   *          The XML element corresponding with the adHocSubProcess definition
+   * @param scope
+   *          The current scope on which the ad-hoc subprocess is defined.
+   */
+  public ActivityImpl parseAdHocSubProcess(Element adHocElement, ScopeImpl scope) {
+    ActivityImpl adHocSubprocessActivity = createActivityOnScope(adHocElement, scope);
+    adHocSubprocessActivity.setSubProcessScope(true);
+    adHocSubprocessActivity.setScope(true);
+
+    parseAsynchronousContinuationForActivity(adHocElement, adHocSubprocessActivity);
+
+    adHocSubprocessActivity.setProperty(PROPERTYNAME_CONSUMES_COMPENSATION, true);
+    adHocSubprocessActivity.setActivityBehavior(new AdHocSubProcessActivityBehavior());
+
+    // ordering attribute — default Parallel per BPMN 2.0 spec
+    String orderingAttr = adHocElement.attribute("ordering");
+    AdHocOrdering ordering = (orderingAttr != null) ? AdHocOrdering.valueOf(orderingAttr) : AdHocOrdering.Parallel;
+    adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_ORDERING, ordering);
+
+    // cancelRemainingInstances attribute — default true per BPMN 2.0 spec
+    Boolean cancelRemainingInstances = parseBooleanAttribute(adHocElement.attribute("cancelRemainingInstances"), true);
+    adHocSubprocessActivity.getProperties().set(BpmnProperties.AD_HOC_CANCEL_REMAINING_INSTANCES, cancelRemainingInstances);
+
+    // completionCondition child element — wire expression directly into behavior
+    // (absent completionCondition is valid; subprocess then requires force-complete via API)
+    Element completionCondition = adHocElement.element("completionCondition");
+    if (completionCondition != null) {
+      String completionConditionText = completionCondition.getText();
+      ((AdHocSubProcessActivityBehavior) adHocSubprocessActivity.getActivityBehavior())
+          .setCompletionConditionExpression(expressionManager.createExpression(completionConditionText));
+    }
+
+    // Reject startEvent and endEvent as direct children
+    if (!adHocElement.elements("startEvent").isEmpty()) {
+      addError("An ad-hoc subprocess must not contain a startEvent", adHocElement);
+    }
+    if (!adHocElement.elements("endEvent").isEmpty()) {
+      addError("An ad-hoc subprocess must not contain an endEvent", adHocElement);
+    }
+
+    parseScope(adHocElement, adHocSubprocessActivity);
+
+    // Warn if no directly-triggerable activities exist (i.e. all have incoming sequence flows)
+    boolean hasTriggerable = adHocSubprocessActivity.getActivities().stream()
+        .anyMatch(a -> a.getIncomingTransitions().isEmpty());
+    if (!hasTriggerable) {
+      addWarning("Ad-hoc subprocess contains no directly-triggerable activities (all have incoming sequence flows or none exist)", adHocElement);
+    }
+
+    for (BpmnParseListener parseListener : parseListeners) {
+      parseListener.parseAdHocSubProcess(adHocElement, scope, adHocSubprocessActivity);
+    }
+    return adHocSubprocessActivity;
   }
 
   protected ActivityImpl parseTransaction(Element transactionElement, ScopeImpl scope) {

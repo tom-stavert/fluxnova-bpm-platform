@@ -114,6 +114,11 @@ public class DelegatingBpmnParseListener implements BpmnParseListener {
   }
 
   @Override
+  public void parseAdHocSubProcess(Element adHocElement, ScopeImpl scope, ActivityImpl activity) {
+    DELEGATE.parseAdHocSubProcess(adHocElement, scope, activity);
+  }
+
+  @Override
   public void parseCallActivity(Element callActivityElement, ScopeImpl scope,
       ActivityImpl activity) {
     DELEGATE.parseCallActivity(callActivityElement, scope, activity);
