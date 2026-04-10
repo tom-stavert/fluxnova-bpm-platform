@@ -3957,6 +3957,9 @@ public class BpmnParse extends Parse {
       addWarning("Ad-hoc subprocess contains no directly-triggerable activities (all have incoming sequence flows or none exist)", adHocElement);
     }
 
+    for (BpmnParseListener parseListener : parseListeners) {
+      parseListener.parseAdHocSubProcess(adHocElement, scope, adHocSubprocessActivity);
+    }
     return adHocSubprocessActivity;
   }
 

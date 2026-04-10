@@ -163,6 +163,12 @@ public class CdiEventSupportBpmnParseListener implements BpmnParseListener {
   }
 
   @Override
+  public void parseAdHocSubProcess(Element adHocElement, ScopeImpl scope, ActivityImpl activity) {
+    addStartEventListener(activity);
+    addEndEventListener(activity);
+  }
+
+  @Override
   public void parseCallActivity(Element callActivityElement, ScopeImpl scope, ActivityImpl activity) {
     addStartEventListener(activity);
     addEndEventListener(activity);
