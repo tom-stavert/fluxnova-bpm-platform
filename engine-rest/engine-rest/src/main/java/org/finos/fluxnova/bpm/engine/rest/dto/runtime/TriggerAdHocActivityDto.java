@@ -16,12 +16,17 @@
  */
 package org.finos.fluxnova.bpm.engine.rest.dto.runtime;
 
+import java.util.Map;
+
+import org.finos.fluxnova.bpm.engine.rest.dto.VariableValueDto;
+
 /**
  * Request body DTO for POST /execution/{id}/trigger-ad-hoc-activity
  */
 public class TriggerAdHocActivityDto {
 
   private String activityId;
+  private Map<String, VariableValueDto> variables;
 
   public String getActivityId() {
     return activityId;
@@ -29,6 +34,14 @@ public class TriggerAdHocActivityDto {
 
   public void setActivityId(String activityId) {
     this.activityId = activityId;
+  }
+
+  public Map<String, VariableValueDto> getVariables() {
+    return variables;
+  }
+
+  public void setVariables(Map<String, VariableValueDto> variables) {
+    this.variables = variables;
   }
 
 }

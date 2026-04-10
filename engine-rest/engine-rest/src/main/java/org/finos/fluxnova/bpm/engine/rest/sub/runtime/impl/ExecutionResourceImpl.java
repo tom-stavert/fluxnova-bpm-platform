@@ -97,7 +97,11 @@ public class ExecutionResourceImpl implements ExecutionResource {
   @Override
   public void triggerAdHocActivity(TriggerAdHocActivityDto dto) {
     try {
-      engine.getRuntimeService().triggerAdHocActivity(executionId, dto.getActivityId());
+      VariableMap variables = VariableValueDto.toMap(dto.getVariables(), engine, objectMapper);
+      engine.getRuntimeService().triggerAdHocActivity(executionId, dto.getActivityId(), variables);
+    } catch (RestException e) {
+      String errorMessage = String.format("Cannot trigger ad-hoc activity on execution %s: %s", executionId, e.getMessage());
+      throw new InvalidRequestException(e.getStatus(), e, errorMessage);
     } catch (AuthorizationException e) {
       throw e;
     } catch (BadUserRequestException e) {

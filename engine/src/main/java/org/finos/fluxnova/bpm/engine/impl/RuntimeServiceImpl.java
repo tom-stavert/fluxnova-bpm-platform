@@ -20,6 +20,7 @@ import static org.finos.fluxnova.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -532,7 +533,12 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
 
   @Override
   public void triggerAdHocActivity(String executionId, String activityId) {
-    commandExecutor.execute(new TriggerAdHocActivityCmd(executionId, activityId));
+    triggerAdHocActivity(executionId, activityId, Collections.emptyMap());
+  }
+
+  @Override
+  public void triggerAdHocActivity(String executionId, String activityId, Map<String, Object> variables) {
+    commandExecutor.execute(new TriggerAdHocActivityCmd(executionId, activityId, variables));
   }
 
   @Override

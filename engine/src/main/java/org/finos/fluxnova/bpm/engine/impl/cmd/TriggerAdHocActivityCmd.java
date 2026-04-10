@@ -19,6 +19,8 @@ package org.finos.fluxnova.bpm.engine.impl.cmd;
 import static org.finos.fluxnova.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 import org.finos.fluxnova.bpm.engine.BadUserRequestException;
 import org.finos.fluxnova.bpm.engine.impl.bpmn.behavior.AdHocSubProcessActivityBehavior;
@@ -37,10 +39,16 @@ public class TriggerAdHocActivityCmd implements Command<Void>, Serializable {
 
   protected final String executionId;
   protected final String activityId;
+  protected final Map<String, Object> variables;
 
-  public TriggerAdHocActivityCmd(String executionId, String activityId) {
+  public TriggerAdHocActivityCmd(String executionId, String activityId, Map<String, Object> variables) {
     this.executionId = executionId;
     this.activityId  = activityId;
+    this.variables   = variables != null ? variables : Collections.emptyMap();
+  }
+
+  public TriggerAdHocActivityCmd(String executionId, String activityId) {
+    this(executionId, activityId, Collections.emptyMap());
   }
 
   @Override
@@ -66,7 +74,7 @@ public class TriggerAdHocActivityCmd implements Command<Void>, Serializable {
           "Execution '" + executionId + "' is not waiting in an ad-hoc subprocess scope");
     }
 
-    ((AdHocSubProcessActivityBehavior) behavior).triggerChildActivity(execution, activityId);
+    ((AdHocSubProcessActivityBehavior) behavior).triggerChildActivity(execution, activityId, variables);
     return null;
   }
 

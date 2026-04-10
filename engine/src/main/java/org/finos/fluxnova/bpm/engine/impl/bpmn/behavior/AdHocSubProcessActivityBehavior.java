@@ -17,7 +17,9 @@
 package org.finos.fluxnova.bpm.engine.impl.bpmn.behavior;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.finos.fluxnova.bpm.engine.BadUserRequestException;
 import org.finos.fluxnova.bpm.engine.delegate.Expression;
@@ -73,12 +75,16 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
   // -------------------------------------------------------------------------
 
   /**
-   * Starts a named direct-child activity inside this ad-hoc subprocess scope.
+   * Starts a named direct-child activity inside this ad-hoc subprocess scope
+   * with local variables set on the child execution before it begins.
    *
    * @param scopeExecution the scope execution of the ad-hoc subprocess
    * @param activityId     id of the direct child activity to trigger
+   * @param variables      local variables to set on the child execution before it starts;
+   *                       may be null or empty
    */
-  public void triggerChildActivity(ActivityExecution scopeExecution, String activityId) {
+  public void triggerChildActivity(ActivityExecution scopeExecution, String activityId,
+      Map<String, Object> variables) {
     ActivityImpl adHocActivity = (ActivityImpl) scopeExecution.getActivity();
     ActivityImpl childActivity  = adHocActivity.getChildActivity(activityId);
 
@@ -116,10 +122,23 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
     ActivityExecution childExecution = scopeExecution.createExecution();
     ((ExecutionEntity) childExecution).setConcurrent(true);
     ((ExecutionEntity) childExecution).setScope(false);
+    if (variables != null && !variables.isEmpty()) {
+      childExecution.setVariablesLocal(variables);
+    }
     childExecution.executeActivity(childActivity);
 
     int active = intVar(scopeExecution, NR_OF_ACTIVE_INSTANCES);
     scopeExecution.setVariableLocal(NR_OF_ACTIVE_INSTANCES, active + 1);
+  }
+
+  /**
+   * Starts a named direct-child activity inside this ad-hoc subprocess scope.
+   *
+   * @param scopeExecution the scope execution of the ad-hoc subprocess
+   * @param activityId     id of the direct child activity to trigger
+   */
+  public void triggerChildActivity(ActivityExecution scopeExecution, String activityId) {
+    triggerChildActivity(scopeExecution, activityId, Collections.emptyMap());
   }
 
   // -------------------------------------------------------------------------
