@@ -170,7 +170,19 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
 
   @Override
   public void complete(ActivityExecution scopeExecution) {
-    leave(scopeExecution);
+    Boolean cancelRemaining = scopeExecution.getActivity().getProperties().get(BpmnProperties.AD_HOC_CANCEL_REMAINING_INSTANCES);
+    if (!Boolean.FALSE.equals(cancelRemaining)) {
+      // cancelRemainingInstances=true (default): cancel active children and leave immediately
+      cancelActiveChildren(scopeExecution);
+      leave(scopeExecution);
+    } else {
+      // cancelRemainingInstances=false: block new triggers and drain remaining children
+      scopeExecution.setVariableLocal(COMPLETION_PENDING, true);
+      int active = intVar(scopeExecution, NR_OF_ACTIVE_INSTANCES);
+      if (active == 0) {
+        leave(scopeExecution);
+      }
+    }
   }
 
   // -------------------------------------------------------------------------

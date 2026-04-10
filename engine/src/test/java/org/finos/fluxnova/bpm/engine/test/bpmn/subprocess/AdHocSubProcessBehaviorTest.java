@@ -348,6 +348,99 @@ public class AdHocSubProcessBehaviorTest extends PluggableProcessEngineTest {
   }
 
   // -------------------------------------------------------------------------
+  // M3: Sequence flow chain — nrOfCompletedInstances increments at terminal only
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void testSequenceFlowChainCountsOnlyAtTerminal() {
+    deploy(chainXml());
+
+    ProcessInstance pi = runtimeService.startProcessInstanceByKey(PROCESS_KEY);
+    Execution adHocExec = adHocExecution(pi);
+
+    // Trigger userTaskB (no incoming flows — valid trigger target)
+    runtimeService.triggerAdHocActivity(adHocExec.getId(), "userTaskB");
+
+    // Complete the intermediate task; chain moves to userTaskC
+    Task taskB = taskService.createTaskQuery().taskDefinitionKey("userTaskB")
+        .processInstanceId(pi.getId()).singleResult();
+    taskService.complete(taskB.getId());
+
+    // Mid-chain: concurrent child still active, terminal not yet reached
+    assertThat(nrOfActive(adHocExec)).isEqualTo(1);
+    assertThat(nrOfCompleted(adHocExec)).isEqualTo(0);
+
+    // Complete the terminal task; chain ends
+    Task taskC = taskService.createTaskQuery().taskDefinitionKey("userTaskC")
+        .processInstanceId(pi.getId()).singleResult();
+    taskService.complete(taskC.getId());
+
+    // Terminal reached: counted once
+    assertThat(nrOfActive(adHocExec)).isEqualTo(0);
+    assertThat(nrOfCompleted(adHocExec)).isEqualTo(1);
+  }
+
+  // -------------------------------------------------------------------------
+  // M4: Triggering an activity with incoming sequence flows is rejected
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void testTriggerActivityWithIncomingFlowIsRejected() {
+    deploy(chainXml());
+
+    ProcessInstance pi = runtimeService.startProcessInstanceByKey(PROCESS_KEY);
+    Execution adHocExec = adHocExecution(pi);
+
+    // userTaskC has an incoming sequence flow — must be rejected
+    assertThatThrownBy(() ->
+        runtimeService.triggerAdHocActivity(adHocExec.getId(), "userTaskC")
+    ).isInstanceOf(BadUserRequestException.class)
+     .hasMessageContaining("incoming sequence flows and cannot be triggered directly");
+  }
+
+  // -------------------------------------------------------------------------
+  // M5: Force-complete with cancelRemainingInstances=false enters drain mode
+  // -------------------------------------------------------------------------
+
+  @Test
+  public void testForceCompleteWithCancelRemainingFalseEntersDrainMode() {
+    deploy(parallelNoCancelXml(null, "<userTask id=\"taskA\"/>", "<userTask id=\"taskB\"/>"));
+
+    ProcessInstance pi = runtimeService.startProcessInstanceByKey(PROCESS_KEY);
+    Execution adHocExec = adHocExecution(pi);
+
+    runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskA");
+    runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskB");
+
+    // Force-complete with cancelRemainingInstances=false → drain mode
+    runtimeService.completeAdHocSubprocess(adHocExec.getId());
+
+    // Subprocess still alive (draining)
+    assertNotNull(runtimeService.createProcessInstanceQuery()
+        .processInstanceId(pi.getId()).singleResult());
+
+    // New triggers are rejected while draining
+    assertThatThrownBy(() ->
+        runtimeService.triggerAdHocActivity(adHocExec.getId(), "taskA")
+    ).isInstanceOf(BadUserRequestException.class)
+     .hasMessageContaining("waiting to complete");
+
+    // Drain taskA
+    Task taskA = taskService.createTaskQuery().taskDefinitionKey("taskA")
+        .processInstanceId(pi.getId()).singleResult();
+    taskService.complete(taskA.getId());
+    assertNotNull(runtimeService.createProcessInstanceQuery()
+        .processInstanceId(pi.getId()).singleResult());
+
+    // Drain taskB — last active child, subprocess exits
+    Task taskB = taskService.createTaskQuery().taskDefinitionKey("taskB")
+        .processInstanceId(pi.getId()).singleResult();
+    taskService.complete(taskB.getId());
+    assertNull(runtimeService.createProcessInstanceQuery()
+        .processInstanceId(pi.getId()).singleResult());
+  }
+
+  // -------------------------------------------------------------------------
   // 7.3.13 triggerAdHocActivity on non-ad-hoc execution is rejected
   // -------------------------------------------------------------------------
 
@@ -442,6 +535,17 @@ public class AdHocSubProcessBehaviorTest extends PluggableProcessEngineTest {
     return adHocXml("Sequential", true, completionCondition,
         "<userTask id=\"taskA\"/>",
         "<userTask id=\"taskB\"/>");
+  }
+
+  /**
+   * Parallel ad-hoc subprocess with a userTaskB → userTaskC sequence flow chain.
+   * userTaskB has no incoming flows (valid trigger target); userTaskC has one (invalid).
+   */
+  private static String chainXml() {
+    return adHocXml("Parallel", true, null,
+        "<userTask id=\"userTaskB\"/>",
+        "<userTask id=\"userTaskC\"/>",
+        "<sequenceFlow id=\"chain1\" sourceRef=\"userTaskB\" targetRef=\"userTaskC\"/>");
   }
 
   /**
