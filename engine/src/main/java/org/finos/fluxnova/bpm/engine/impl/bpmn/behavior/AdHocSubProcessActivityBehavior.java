@@ -205,6 +205,9 @@ public class AdHocSubProcessActivityBehavior extends AbstractBpmnActivityBehavio
     List<ActivityExecution> children = new ArrayList<>(
         ((PvmExecutionImpl) scopeExecution).getNonEventScopeExecutions());
     for (ActivityExecution child : children) {
+      // delete all not-ended instances; these are either active (for non-scope tasks) or inactive
+      // but have no activity id (for scope activities like subprocesses whose execution tree was
+      // restructured by createConcurrentExecution, clearing the activity on the scope execution)
       if (child.isActive() || child.getActivity() == null) {
         ((PvmExecutionImpl) child).deleteCascade("Ad-hoc subprocess completion condition satisfied.");
       } else {
